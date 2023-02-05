@@ -3,6 +3,11 @@
 
 #include "Arduino.h"
 
+// Estados de las electrovalvulas
+#define ON "ON"
+
+#define OFF "OFF"
+
 // Topic recibidos
 const char evDepGaloBajo[] = "deposito/galo/bajo";
 const char evDepGaloBajoSec1[] = "regar/galo/bajo/sec1";
@@ -30,6 +35,6 @@ const char nivelDepGaloBajo[] = "nivel/deposito/galo/bajo";
 const char nivelDepHuerto[] = "nivel/deposito/huerto";
 
 // Topic enviar corriente consumida motor
-const char correinteMotor[] = "corriente/motor";
+const char correinteMotor[] = "intensidad/motor";
 
 #endif // _DEVICE_H_

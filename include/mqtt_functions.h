@@ -6,6 +6,7 @@
 
 #include "config.h"
 #include "device.h"
+#include "nextion_screen.h"
 #include "serial_tx.h"
 #include "log.h"
 
@@ -15,10 +16,11 @@
 AsyncMqttClient mqttClient;
 TimerHandle_t mqttReconnectTimer;
 
+// Funcion que publica los mensajes en los diferentes topic
 void mqttPublish(String data)
 {
 
-  // Se filtra el topic en cual publicar y se publica
+  // Se comprueba el topic y se publica
   if (data.indexOf((String)nivelDepGaloBajo) != -1)
   {
     String payload = data.substring(data.indexOf("=") + 1);
@@ -45,6 +47,9 @@ void mqttPublish(String data)
     String payload = data.substring(data.indexOf("=") + 1);
 
     mqttClient.publish(evDepGaloBajoState, 1, false, payload.c_str());
+
+    xTimerStop(timer_dep_galo_bajo, 0);
+    set_dep_galo_bajo(payload);
   }
 
   if (data.indexOf((String)evDepGaloBajoSec1State) != -1)
@@ -52,6 +57,9 @@ void mqttPublish(String data)
     String payload = data.substring(data.indexOf("=") + 1);
 
     mqttClient.publish(evDepGaloBajoSec1State, 1, false, payload.c_str());
+
+    xTimerStop(timer_galo_bajo_sec1, 0);
+    set_galo_bajo_sec1(payload);
   }
 
   if (data.indexOf((String)evDepGaloBajoSec2State) != -1)
@@ -59,6 +67,9 @@ void mqttPublish(String data)
     String payload = data.substring(data.indexOf("=") + 1);
 
     mqttClient.publish(evDepGaloBajoSec2State, 1, false, payload.c_str());
+
+    xTimerStop(timer_galo_bajo_sec2, 0);
+    set_galo_bajo_sec2(payload);
   }
 
   if (data.indexOf((String)evDepHuertoState) != -1)
@@ -66,6 +77,9 @@ void mqttPublish(String data)
     String payload = data.substring(data.indexOf("=") + 1);
 
     mqttClient.publish(evDepHuertoState, 1, false, payload.c_str());
+
+    xTimerStop(timer_dep_huerto, 0);
+    set_dep_huerto(payload);
   }
 
   if (data.indexOf((String)evDepHuertoSec1State) != -1)
@@ -73,6 +87,9 @@ void mqttPublish(String data)
     String payload = data.substring(data.indexOf("=") + 1);
 
     mqttClient.publish(evDepHuertoSec1State, 1, false, payload.c_str());
+
+    xTimerStop(timer_huerto_sec1, 0);
+    set_huerto_sec1(payload);
   }
 
   if (data.indexOf((String)evDepHuertoSec2State) != -1)
@@ -80,6 +97,9 @@ void mqttPublish(String data)
     String payload = data.substring(data.indexOf("=") + 1);
 
     mqttClient.publish(evDepHuertoSec2State, 1, false, payload.c_str());
+
+    xTimerStop(timer_huerto_sec2, 0);
+    set_huerto_sec2(payload);
   }
 
   if (data.indexOf((String)evCasaState) != -1)
@@ -87,9 +107,13 @@ void mqttPublish(String data)
     String payload = data.substring(data.indexOf("=") + 1);
 
     mqttClient.publish(evCasaState, 1, false, payload.c_str());
+
+    xTimerStop(timer_agua_casa, 0);
+    set_agua_casa(payload);
   }
 }
 
+// Topic que se suscribe
 void mqttSubscribe()
 {
   mqttClient.subscribe(evDepGaloBajo, 1);
@@ -103,12 +127,14 @@ void mqttSubscribe()
   mqttClient.subscribe(evCasa, 1);
 }
 
+// Funcion que conecta al servidor mqtt
 void connectToMqtt()
 {
   DEBUG_PRINT("Connecting to MQTT...");
   mqttClient.connect();
 }
 
+// Funcion que se ejecuta cuando se ha conectado al servidor
 void onMqttConnect(bool sessionPresent)
 {
   DEBUG_PRINT("Connected to MQTT");
@@ -116,6 +142,7 @@ void onMqttConnect(bool sessionPresent)
   mqttSubscribe();
 }
 
+// Funcion que se ejecuta cuando se ha desconectado del servidor
 void onMqttDisconnect(AsyncMqttClientDisconnectReason reason)
 {
   DEBUG_PRINT("Disconnected from MQTT.");
@@ -126,15 +153,7 @@ void onMqttDisconnect(AsyncMqttClientDisconnectReason reason)
   }
 }
 
-void onMqttSubscribe(uint16_t packetId, uint8_t qos)
-{
-  DEBUG_PRINT("Subscribe acknowledged.");
-  DEBUG_PRINT("  packetId: ");
-  DEBUG_PRINT(packetId);
-  DEBUG_PRINT("  qos: ");
-  DEBUG_PRINT(qos);
-}
-
+// Funcion que recibe las publicaciones suscritas
 void onMqttMessage(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total)
 {
   DEBUG_PRINT("Publish received.");
@@ -158,13 +177,7 @@ void onMqttMessage(char *topic, char *payload, AsyncMqttClientMessageProperties 
   serial_tx(data);
 }
 
-void onMqttPublish(uint16_t packetId)
-{
-  DEBUG_PRINT("Publish acknowledged.");
-  DEBUG_PRINT("  packetId: ");
-  DEBUG_PRINT(packetId);
-}
-
+// Configura e inicia el servidor mqtt
 void InitMqtt()
 {
   Config configData;
@@ -172,11 +185,7 @@ void InitMqtt()
   mqttClient.onConnect(onMqttConnect);
   mqttClient.onDisconnect(onMqttDisconnect);
 
-  mqttClient.onSubscribe(onMqttSubscribe);
-  // mqttClient.onUnsubscribe(OnMqttUnsubscribe);
-
   mqttClient.onMessage(onMqttMessage);
-  mqttClient.onPublish(onMqttPublish);
 
   IPAddress IPMqtt;
   IPMqtt.fromString(configData.getMqttHost());
