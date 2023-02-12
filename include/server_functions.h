@@ -8,7 +8,6 @@
 #include "save_flash.h"
 #include "config.h"
 #include "page_config.h"
-#include "log.h"
 
 #define DEBUG
 #include "debug_utils.h"
@@ -214,6 +213,23 @@ void serverHandlers()
               AsyncWebServerResponse *response = request->beginResponse_P(200, "image/jpeg", logo_gz, logo_gz_len);
               response->addHeader("Content-Encoding", "gzip");
               request->send(response); });
+}
+
+// Inicia el servidor web
+void init_server()
+{
+  // Configura el servidor web
+  serverHandlers();
+
+  // Inicia ElegantOTA
+  AsyncElegantOTA.begin(&server);
+
+  // Inicia el servidor
+  server.begin();
+
+  write_log("Servidor HTTP iniciado...");
+
+  DEBUG_PRINT("Servidor HTTP iniciado...");
 }
 
 #endif //_SERVER_FUNCTIONS_H

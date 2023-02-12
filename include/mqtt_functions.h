@@ -26,6 +26,8 @@ void mqttPublish(String data)
     String payload = data.substring(data.indexOf("=") + 1);
 
     mqttClient.publish(nivelDepGaloBajo, 1, false, payload.c_str());
+
+    set_nivel_dep_galo_bajo(payload.c_str());
   }
 
   if (data.indexOf((String)nivelDepHuerto) != -1)
@@ -33,6 +35,8 @@ void mqttPublish(String data)
     String payload = data.substring(data.indexOf("=") + 1);
 
     mqttClient.publish(nivelDepHuerto, 1, false, payload.c_str());
+
+    set_nivel_dep_huerto(payload.c_str());
   }
 
   if (data.indexOf((String)correinteMotor) != -1)
@@ -40,6 +44,8 @@ void mqttPublish(String data)
     String payload = data.substring(data.indexOf("=") + 1);
 
     mqttClient.publish(correinteMotor, 1, false, payload.c_str());
+
+    set_consumo_motor(payload.c_str());
   }
 
   if (data.indexOf((String)evDepGaloBajoState) != -1)

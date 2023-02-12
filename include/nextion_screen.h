@@ -6,6 +6,7 @@
 #include "nextion.h"
 #include "device.h"
 #include "serial_tx.h"
+#include "log.h"
 
 // Botones de los depositos del pozo
 NexDSButton btDepGaloBajo = NexDSButton(0, 1, "btDepGaloBajo");
@@ -19,6 +20,11 @@ NexDSButton btGaloBajoSec2 = NexDSButton(0, 5, "btGaloBajoSec2");
 // Botones de los sectores del deposito del huerto
 NexDSButton btHuertoSec1 = NexDSButton(0, 6, "btHuertoSec1");
 NexDSButton btHuertoSec2 = NexDSButton(0, 7, "btHuertoSec2");
+
+// Componente numerica del consumo del motor, y los niveles de los depositos
+NexText tConsumoMotor = NexText(0, 14, "tConsumoMotor");
+NexText tDepGaloBajo = NexText(0, 13, "tDepGaloBajo");
+NexText tDepHuerto = NexText(0, 11, "tDepHuerto");
 
 // Lista de eventos tactiles
 NexTouch *nex_touch_listen[] = {
@@ -267,6 +273,22 @@ void send_huerto_sec2()
     }
 }
 
+// Funciones que cambian el valor del consumo del motor y el nivel de los depositos
+void set_consumo_motor(const char *value)
+{
+    tConsumoMotor.setText(value);
+}
+
+void set_nivel_dep_galo_bajo(const char *value)
+{
+    tDepGaloBajo.setText(value);
+}
+
+void set_nivel_dep_huerto(const char *value)
+{
+    tDepHuerto.setText(value);
+}
+
 // Funciones que cambian el estado de los botones en caso de recibir un cambio desde el servidor mqtt
 void set_dep_galo_bajo(String state)
 {
@@ -355,8 +377,13 @@ void set_huerto_sec2(String state)
 // Inicializa la pantalla nextion y las funciones que manejaran los eventos
 void init_nextion()
 {
+    // Inicia el puerto serial de la pantalla nextion
+    serial_nextion_init();
+
+    // Inicia la pantalla nextion
     nexInit();
 
+    // Vincula las funciones que se ejecutan en cada evento que envia los boto es de la pantalla
     btDepGaloBajo.attachPop((NexTouchEventCb)send_dep_galo_bajo);
     btDepHuerto.attachPop((NexTouchEventCb)send_dep_huerto);
     btAguaCasa.attachPop((NexTouchEventCb)send_agua_casa);
@@ -373,6 +400,8 @@ void init_nextion()
     timer_galo_bajo_sec2 = xTimerCreate("timer_galo_bajo_sec2", pdMS_TO_TICKS(15000), pdFALSE, (void *)0, reinterpret_cast<TimerCallbackFunction_t>(await_res_galo_bajo_sec2));
     timer_huerto_sec1 = xTimerCreate("timer_huerto_sec1", pdMS_TO_TICKS(15000), pdFALSE, (void *)0, reinterpret_cast<TimerCallbackFunction_t>(await_res_huerto_sec1));
     timer_huerto_sec2 = xTimerCreate("timer_huerto_sec2", pdMS_TO_TICKS(15000), pdFALSE, (void *)0, reinterpret_cast<TimerCallbackFunction_t>(await_res_huerto_sec2));
+
+    write_log("Pantalla nextion iniciada...");
 }
 
 #endif //_NEXTION_SCREEN_H

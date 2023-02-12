@@ -6,6 +6,8 @@
 #include "mqtt_functions.h"
 #include "server_functions.h"
 #include "serial_rx.h"
+#include "log.h"
+#include "nextion_screen.h"
 
 #include "debug_utils.h"
 #define DEBUG
@@ -40,23 +42,20 @@ void setup()
   // Iniciamos la conexion wifi como cliente
   wifiConnectSTA();
 
-  // Configura el servidor web
-  serverHandlers();
+  // Inicia el servidor web
+  void init_server();
 
-  // Inicia ElegantOTA
-  AsyncElegantOTA.begin(&server);
-
-  // Inicia el servidor
-  server.begin();
-
-  write_log("Servidor HTTP iniciado...");
-
-  DEBUG_PRINT("Servidor HTTP iniciado...");
+  // Inicia la pantalla nextion
+  init_nextion();
 
   DEBUG_PRINT("Configuracion de red= " + readMemFlash("config", "config"));
 }
 
 void loop()
 {
+  // Comprueba la recepcion de datos por el puerto serie
   serial_rx();
+
+  // Escucha el estado de los eventos recibidos desde la pantalla nextion
+  nexLoop(nex_touch_listen);
 }
